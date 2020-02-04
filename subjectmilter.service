@@ -1,0 +1,16 @@
+#
+# Managed by ansible
+# Role: mailserver
+#
+[Unit]
+Description=Subectmilter
+After=network.target network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/veloc1ty/subjectmilter
+User=veloc1ty
+Group=veloc1ty
+
+[Install]
+WantedBy=multi-user.target
