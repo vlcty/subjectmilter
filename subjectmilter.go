@@ -14,14 +14,32 @@ import (
 	"github.com/mschneider82/milter"
 )
 
-const SUBJECTS_TXT_FILE string = "/etc/subjects.txt"
-
-var (
-	badstrings      []string
-	fuckOffResponse milter.Response
+const (
+	SUBJECTS_TXT_FILE string = "/etc/subjects.txt"
+	FUCK_OFF_MESSAGE  string = "550 Fuck off"
 )
 
 type MyFilter struct {
+	badstrings []string
+}
+
+func (filter *MyFilter) ContainsBadString(value string) bool {
+	decoder := mime.WordDecoder{}
+	decoded, decodeError := decoder.DecodeHeader(value)
+
+	if decodeError != nil {
+		return false
+	}
+
+	decoded = strings.ReplaceAll(decoded, "\n", "")
+
+	for _, badString := range filter.badstrings {
+		if strings.Contains(decoded, badString) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (e *MyFilter) Init(sid, mid string) {
@@ -49,28 +67,8 @@ func (e *MyFilter) RcptTo(name string, m *milter.Modifier) (milter.Response, err
 }
 
 func (e *MyFilter) Header(name, value string, m *milter.Modifier) (milter.Response, error) {
-	if name == "Subject" {
-		dec := mime.WordDecoder{}
-		decoded, decodeError := dec.DecodeHeader(value)
-
-		if decodeError != nil {
-			fmt.Printf("Passing because of decode error: %s\n", decodeError.Error())
-		} else {
-			decoded = strings.ReplaceAll(decoded, "\n", " ")
-
-			fmt.Printf("Subject to analyze: \"%s\"\n", decoded)
-
-			for _, badString := range badstrings {
-				if strings.Contains(decoded, badString) {
-
-					fmt.Printf("Bad string \"%s\" detected. Fuck off sent!\n", badString)
-
-					return fuckOffResponse, nil
-				}
-			}
-
-			fmt.Println("Nothing to nag about. Continuing!")
-		}
+	if name == "Subject" && e.ContainsBadString(value) {
+		return milter.NewResponseStr(milter.SMFIR_REPLYCODE, FUCK_OFF_MESSAGE), nil
 	}
 
 	return milter.RespContinue, nil
@@ -89,13 +87,17 @@ func (e *MyFilter) Body(m *milter.Modifier) (milter.Response, error) {
 }
 
 func main() {
-	badstrings = LoadBadStrings()
-	fuckOffResponse = milter.NewResponseStr(milter.SMFIR_REPLYCODE, "550 Fuck off")
+	badstrings := LoadBadStrings()
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP)
 
-	go HandleSignals(signals)
+	go func() {
+		for {
+			<-signals
+			badstrings = LoadBadStrings()
+		}
+	}()
 
 	socket, socketErr := net.Listen("tcp", "127.0.0.1:1339")
 	if socketErr != nil {
@@ -105,7 +107,8 @@ func main() {
 		defer socket.Close()
 
 		init := func() (milter.Milter, milter.OptAction, milter.OptProtocol) {
-			return &MyFilter{},
+			return &MyFilter{
+					badstrings: badstrings},
 				milter.OptNone,
 				milter.OptNoBody
 		}
@@ -149,14 +152,4 @@ func LoadBadStrings() []string {
 	fmt.Printf("Read %d subjects from %s\n", len(strings), SUBJECTS_TXT_FILE)
 
 	return strings
-}
-
-func HandleSignals(signals chan os.Signal) {
-	fmt.Println("Signal handler started")
-
-	for {
-		<-signals
-
-		badstrings = LoadBadStrings()
-	}
 }
