@@ -90,7 +90,7 @@ func (e *MyFilter) Body(m *milter.Modifier) (milter.Response, error) {
 
 func main() {
 	badstrings = LoadBadStrings()
-	fuckOffResponse = milter.NewResponseStr('y', "550 Fuck off")
+	fuckOffResponse = milter.NewResponseStr(milter.SMFIR_REPLYCODE, "550 Fuck off")
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP)
