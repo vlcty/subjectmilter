@@ -1,3 +1,4 @@
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/mschneider82/milter v1.1.2/go.mod h1:tO5zYqjX2wmwfver/a2lKFVXrNGauvUY5Y1RemvSbJ8=
 github.com/mschneider82/milter v1.2.1 h1:ojg/esFSCIBykwB4yuUJAYGci0X6qSaswYCrfB6c2B4=
@@ -6,9 +7,11 @@ github.com/mschneider82/milterclient v0.0.0-20180417152208-081e1cb2de4b/go.mod h
 github.com/mschneider82/milterclient v0.0.0-20191210092858-6c7cf5b778f0 h1:YNVPhcCZzpyeC+bEMcjUYPO0x2FcBisUAZ64AuKOFVw=
 github.com/mschneider82/milterclient v0.0.0-20191210092858-6c7cf5b778f0/go.mod h1:lMwEdshxgvrMcN+Ok0mTvY6MAdZSR8CYydBQnvbSLTI=
 github.com/phalaaxx/milter v0.0.0-20190809081256-3fbd661ff459/go.mod h1:CCDGSeT1mS/L54GyiT/VNpBYpx84PUrPU+DazSVGpOk=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
+github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1w=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 h1:46ULzRKLh1CwgRq2dC5SlBzEqqNCi8rreOZnNrbqcIY=
