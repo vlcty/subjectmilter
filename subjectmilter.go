@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"mime"
 	"net"
 	"net/textproto"
@@ -12,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/mschneider82/milter"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,6 +21,9 @@ const (
 
 type MyFilter struct {
 	badstrings []string
+
+	decodedSubject    string
+	detectedBadString string
 }
 
 func (filter *MyFilter) ContainsBadString(value string) bool {
@@ -32,9 +35,11 @@ func (filter *MyFilter) ContainsBadString(value string) bool {
 	}
 
 	decoded = strings.ReplaceAll(decoded, "\n", "")
+	filter.decodedSubject = decoded
 
 	for _, badString := range filter.badstrings {
 		if strings.Contains(decoded, badString) {
+			filter.detectedBadString = badString
 			return true
 		}
 	}
@@ -67,8 +72,16 @@ func (e *MyFilter) RcptTo(name string, m *milter.Modifier) (milter.Response, err
 }
 
 func (e *MyFilter) Header(name, value string, m *milter.Modifier) (milter.Response, error) {
-	if name == "Subject" && e.ContainsBadString(value) {
-		return milter.NewResponseStr(milter.SMFIR_REPLYCODE, FUCK_OFF_MESSAGE), nil
+	if name == "Subject" {
+		containsBadString := e.ContainsBadString(value)
+		logger := log.WithField("Subject", e.decodedSubject)
+
+		if containsBadString {
+			logger.WithField("Bad string", e.detectedBadString).Info("Detected bad word. Fuck off!")
+			return milter.NewResponseStr(milter.SMFIR_REPLYCODE, FUCK_OFF_MESSAGE), nil
+		} else {
+			logger.Info("Nothing to nag about")
+		}
 	}
 
 	return milter.RespContinue, nil
@@ -93,16 +106,20 @@ func main() {
 	signal.Notify(signals, syscall.SIGHUP)
 
 	go func() {
+		log.Info("Started signal handler")
+
 		for {
 			<-signals
+
 			badstrings = LoadBadStrings()
+
+			log.WithField("Amount", len(badstrings)).Info("Loaded badstrings")
 		}
 	}()
 
 	socket, socketErr := net.Listen("tcp", "127.0.0.1:1339")
 	if socketErr != nil {
-		fmt.Printf("Error creating socket: %s\n", socketErr.Error())
-		os.Exit(1)
+		log.WithField("Error", socketErr.Error()).Fatal("Was not able to bind port")
 	} else {
 		defer socket.Close()
 
@@ -114,7 +131,7 @@ func main() {
 		}
 
 		errhandler := func(e error) {
-			fmt.Printf("Panic happend: %s\n", e.Error())
+			log.WithField("Error", e.Error()).Error("Error while parsing message")
 		}
 
 		server := milter.Server{
@@ -125,20 +142,20 @@ func main() {
 		}
 		defer server.Close()
 
-		fmt.Println("Subjectmilter initalized")
+		log.Info("Subjectmilter initalized")
 
 		server.RunServer()
 	}
 }
 
 func LoadBadStrings() []string {
-	fmt.Println("Loading badstrings")
+	log.Info("Loading bad strings")
 
 	strings := make([]string, 0)
 
 	file, err := os.Open(SUBJECTS_TXT_FILE)
 	if err != nil {
-		fmt.Printf("Error reading %s: %s\n", SUBJECTS_TXT_FILE, err.Error())
+		log.WithField("Error", err.Error()).Fatal("Error reading bad strings")
 		return strings
 	}
 	defer file.Close()
@@ -149,7 +166,7 @@ func LoadBadStrings() []string {
 		strings = append(strings, scanner.Text())
 	}
 
-	fmt.Printf("Read %d subjects from %s\n", len(strings), SUBJECTS_TXT_FILE)
+	log.WithField("Amount", len(strings)).Info("Loaded bad strings")
 
 	return strings
 }
