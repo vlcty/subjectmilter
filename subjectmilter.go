@@ -56,6 +56,7 @@ func (e *MyFilter) Header(name, value string, m *milter.Modifier) (milter.Respon
 		if decodeError != nil {
 			fmt.Printf("Passing because of decode error: %s\n", decodeError.Error())
 		} else {
+			decoded = strings.ReplaceAll(decoded, "\n", " ")
 
 			fmt.Printf("Subject to analyze: \"%s\"\n", decoded)
 
